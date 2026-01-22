@@ -2,6 +2,7 @@ package com.gemini.calories.data.repository
 
 import android.content.Context
 import android.graphics.BitmapFactory
+import android.os.Build
 import com.gemini.calories.domain.model.FoodAnalysisResult
 import com.gemini.calories.domain.repository.FoodAnalyzer
 import com.google.ai.client.generativeai.GenerativeModel
@@ -13,7 +14,8 @@ import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 class LocalGeminiAnalyzer @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val onDeviceGeminiChecker: OnDeviceGeminiChecker
 ) : FoodAnalyzer {
 
     // Should be injected or managed, but for simplicity:
@@ -29,6 +31,8 @@ class LocalGeminiAnalyzer @Inject constructor(
         // but naming it LocalGeminiAnalyzer implies Intent. I'll add a check or comment.
         apiKey = "YOUR_API_KEY" // Local nano usually doesn't need key if system service.
     )
+
+    fun isOnDeviceSupported(): Boolean = onDeviceGeminiChecker.isAvailable()
 
     override suspend fun analyze(imageData: ByteArray): Result<FoodAnalysisResult> {
         return withContext(Dispatchers.IO) {

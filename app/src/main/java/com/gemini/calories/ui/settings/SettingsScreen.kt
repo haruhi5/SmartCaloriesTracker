@@ -51,7 +51,12 @@ fun SettingsScreen(
                 FilterChip(
                     selected = apiType == "gemini",
                     onClick = { viewModel.setApiType("gemini") },
-                    label = { Text("Gemini (Local)") }
+                    label = { Text("Gemini (Cloud)") }
+                )
+                FilterChip(
+                    selected = apiType == "gemini_ondevice",
+                    onClick = { viewModel.setApiType("gemini_ondevice") },
+                    label = { Text("Gemini (On-device)") }
                 )
             }
             
@@ -68,9 +73,15 @@ fun SettingsScreen(
                 ) {
                     Text("Save Key")
                 }
+            } else if (apiType == "gemini_ondevice") {
+                Text(
+                    text = "On-device Gemini runs locally when supported (Pixel/Android 14+). No API key required.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             } else {
                 Text(
-                    text = "Local Gemini uses on-device model. No API key required.",
+                    text = "Cloud Gemini uses your bundled API configuration. No key required here.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
