@@ -69,55 +69,80 @@ fun AnalysisScreen(
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(scrollState),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Image Preview area
-            Box(
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(300.dp)
                     .padding(16.dp),
-                contentAlignment = Alignment.Center
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
             ) {
-                if (selectedUri != null) {
-                    AsyncImage(
-                        model = selectedUri,
-                        contentDescription = "Selected Image",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Text("Select an image to analyze", style = MaterialTheme.typography.bodyLarge)
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (selectedUri != null) {
+                        AsyncImage(
+                            model = selectedUri,
+                            contentDescription = "Selected Image",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text(
+                            text = "Select an image to analyze",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
 
             // Input Buttons
             if (uiState is AnalysisUiState.Idle) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Button(onClick = {
-                        val uri = createTempImageUri(context)
-                        tempCameraUri = uri
-                        cameraLauncher.launch(uri)
-                    }) {
+                    FilledTonalButton(
+                        onClick = {
+                            val uri = createTempImageUri(context)
+                            tempCameraUri = uri
+                            cameraLauncher.launch(uri)
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
                         Icon(Icons.Default.CameraAlt, null)
                         Spacer(Modifier.width(8.dp))
                         Text("Camera")
                     }
-                    Button(onClick = { 
-                        galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                    }) {
+                    FilledTonalButton(
+                        onClick = { 
+                            galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
                         Icon(Icons.Default.Image, null)
                         Spacer(Modifier.width(8.dp))
                         Text("Gallery")
@@ -126,8 +151,6 @@ fun AnalysisScreen(
             }
 
             // Analyze Action
-            Spacer(modifier = Modifier.height(24.dp))
-            
             if (selectedUri != null && uiState is AnalysisUiState.Idle) {
                 Button(
                     onClick = {
@@ -136,7 +159,9 @@ fun AnalysisScreen(
                             viewModel.analyzeImage(bytes)
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
                 ) {
                     Text("Analyze Calories")
                 }
@@ -145,8 +170,31 @@ fun AnalysisScreen(
             // State Handling
             when (val state = uiState) {
                 is AnalysisUiState.Loading -> {
-                    CircularProgressIndicator(modifier = Modifier.padding(16.dp))
-                    Text("AI is analyzing your food...")
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "AI is analyzing your food...",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
                 }
                 is AnalysisUiState.Success -> {
                     ResultView(result = state.result, onSave = { mealType ->
@@ -155,13 +203,30 @@ fun AnalysisScreen(
                     })
                 }
                 is AnalysisUiState.Error -> {
-                    Text(
-                        text = "Error: ${state.message}",
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                    Button(onClick = { viewModel.reset() }) {
-                        Text("Try Again")
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Error: ${state.message}",
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            FilledTonalButton(onClick = { viewModel.reset() }) {
+                                Text("Try Again")
+                            }
+                        }
                     }
                 }
                 else -> {}
@@ -175,11 +240,21 @@ fun ResultView(result: FoodAnalysisResult, onSave: (MealType) -> Unit) {
     var selectedMealType by remember { mutableStateOf(MealType.LUNCH) }
 
     Card(
-        modifier = Modifier.padding(16.dp).fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("Analysis Result", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Column(modifier = Modifier.padding(20.dp)) {
+            Text(
+                text = "Analysis Result",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
             Spacer(modifier = Modifier.height(16.dp))
             
             result.foods.forEach { food ->

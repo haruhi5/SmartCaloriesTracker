@@ -47,17 +47,19 @@ fun DashboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Dashboard") },
+                title = { Text("Smart Calories Tracker") },
                 actions = {
-                    IconButton(onClick = { navController.navigate(Screen.Profile.route) }) {
-                        Icon(Icons.Default.Person, "Profile")
-                    }
                     IconButton(onClick = { navController.navigate(Screen.Settings.route) }) {
                         Icon(Icons.Default.Settings, "Settings")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         },
+        containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
             FloatingActionButton(onClick = { navController.navigate(Screen.Analysis.route) }) {
                 Icon(Icons.Default.Add, "Add Food")
@@ -67,8 +69,8 @@ fun DashboardScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
+                .padding(padding),
+            contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
@@ -148,28 +150,36 @@ fun CalorieRing(
     target: Int,
     size: Dp
 ) {
-    val progress = (consumed.toFloat() / target).coerceIn(0f, 1f)
+    val progress = (consumed.toFloat() / target).coerceIn(0f, 1.5f)
     val animatedProgress by animateFloatAsState(
-        targetValue = progress,
+        targetValue = progress.coerceAtMost(1f),
         animationSpec = tween(1000, easing = FastOutSlowInEasing), 
         label = "progress"
     )
+    
+    val color = when {
+        progress < 0.8f -> Color(0xFF4CAF50)  // Green - under target
+        progress < 1.0f -> Color(0xFFFFC107)  // Yellow - near target
+        else -> Color(0xFFF44336)              // Red - over target
+    }
 
     Box(contentAlignment = Alignment.Center, modifier = Modifier.size(size)) {
         Canvas(modifier = Modifier.fillMaxSize()) {
+            // Background arc
             drawArc(
-                color = Color.LightGray.copy(alpha = 0.3f),
+                color = color.copy(alpha = 0.2f),
                 startAngle = -90f,
                 sweepAngle = 360f,
                 useCenter = false,
-                style = Stroke(width = 20.dp.toPx(), cap = StrokeCap.Round)
+                style = Stroke(width = 24.dp.toPx(), cap = StrokeCap.Round)
             )
+            // Progress arc
             drawArc(
-                color = if (progress > 1f) Color.Red else Color(0xFF4CAF50),
+                color = color,
                 startAngle = -90f,
                 sweepAngle = 360f * animatedProgress,
                 useCenter = false,
-                style = Stroke(width = 20.dp.toPx(), cap = StrokeCap.Round)
+                style = Stroke(width = 24.dp.toPx(), cap = StrokeCap.Round)
             )
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -181,7 +191,7 @@ fun CalorieRing(
             Text(
                 text = "/ $target kcal",
                 style = MaterialTheme.typography.bodyLarge,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -290,7 +300,11 @@ fun CalorieChartCard(
                         .height(200.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("No data yet", color = Color.Gray)
+                    Text(
+                        text = "No data yet",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
             } else {
                 SimpleLineChart(
