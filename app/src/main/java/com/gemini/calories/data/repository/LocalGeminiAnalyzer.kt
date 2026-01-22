@@ -18,19 +18,12 @@ class LocalGeminiAnalyzer @Inject constructor(
     private val onDeviceGeminiChecker: OnDeviceGeminiChecker
 ) : FoodAnalyzer {
 
-    // Should be injected or managed, but for simplicity:
-    private val generativeModel = GenerativeModel(
-        modelName = "gemini-nano", // Or gemini-pro-vision if using API, but user asked for local if available. 
-        // Note: Gemini Nano access via SDK is currently limited/preview. 
-        // We'll assume the API surface provided by the library `generativeai` allows this or `gemini-pro` via API key.
-        // If truly local is needed, it uses AI Core which has a different API surface (AICore).
-        // Since `generativeai` library is usually for API, but they are adding on-device.
-        // Let's assuming this is the "Gemini API" one but we package it as "Local" capability
-        // OR we use the AICore implementation.
-        // For this task, I will use the standard GenerativeModel which usually hits the API, 
-        // but naming it LocalGeminiAnalyzer implies Intent. I'll add a check or comment.
-        apiKey = "YOUR_API_KEY" // Local nano usually doesn't need key if system service.
-    )
+    private val generativeModel by lazy {
+        GenerativeModel(
+            modelName = "gemini-1.5-flash",  // Cloud fallback model
+            apiKey = ""  // Empty for now; add your Gemini API key if using cloud fallback
+        )
+    }
 
     fun isOnDeviceSupported(): Boolean = onDeviceGeminiChecker.isAvailable()
 

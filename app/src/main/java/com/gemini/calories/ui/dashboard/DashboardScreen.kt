@@ -38,6 +38,11 @@ fun DashboardScreen(
     val targetCalories by viewModel.targetCalories.collectAsState()
     val todayEntries by viewModel.todayEntries.collectAsState()
     val macros by viewModel.macros.collectAsState()
+    val chartData by viewModel.chartData.collectAsState()
+    
+    var showConsumed by remember { mutableStateOf(true) }
+    var showTarget by remember { mutableStateOf(true) }
+    var showDifference by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -73,6 +78,18 @@ fun DashboardScreen(
                     protein = macros.first,
                     carbs = macros.second,
                     fat = macros.third
+                )
+            }
+
+            item {
+                CalorieChartCard(
+                    chartData = chartData,
+                    showConsumed = showConsumed,
+                    showTarget = showTarget,
+                    showDifference = showDifference,
+                    onConsumedToggle = { showConsumed = it },
+                    onTargetToggle = { showTarget = it },
+                    onDifferenceToggle = { showDifference = it }
                 )
             }
 
@@ -175,6 +192,225 @@ fun MacroItem(label: String, value: String, color: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = color)
         Text(text = label, style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+@Composable
+fun CalorieChartCard(
+    chartData: List<ChartDataPoint>,
+    showConsumed: Boolean,
+    showTarget: Boolean,
+    showDifference: Boolean,
+    onConsumedToggle: (Boolean) -> Unit,
+    onTargetToggle: (Boolean) -> Unit,
+    onDifferenceToggle: (Boolean) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "7-Day Calorie Trend",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Legend/Toggle chips
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    selected = showConsumed,
+                    onClick = { onConsumedToggle(!showConsumed) },
+                    label = { Text("Consumed") },
+                    leadingIcon = {
+                        if (showConsumed) {
+                            Box(
+                                modifier = Modifier
+                                    .size(12.dp)
+                                    .padding(2.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Canvas(modifier = Modifier.fillMaxSize()) {
+                                    drawCircle(color = Color(0xFF4CAF50))
+                                }
+                            }
+                        }
+                    }
+                )
+                FilterChip(
+                    selected = showTarget,
+                    onClick = { onTargetToggle(!showTarget) },
+                    label = { Text("Target") },
+                    leadingIcon = {
+                        if (showTarget) {
+                            Box(
+                                modifier = Modifier
+                                    .size(12.dp)
+                                    .padding(2.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Canvas(modifier = Modifier.fillMaxSize()) {
+                                    drawCircle(color = Color(0xFF2196F3))
+                                }
+                            }
+                        }
+                    }
+                )
+                FilterChip(
+                    selected = showDifference,
+                    onClick = { onDifferenceToggle(!showDifference) },
+                    label = { Text("Diff") },
+                    leadingIcon = {
+                        if (showDifference) {
+                            Box(
+                                modifier = Modifier
+                                    .size(12.dp)
+                                    .padding(2.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Canvas(modifier = Modifier.fillMaxSize()) {
+                                    drawCircle(color = Color(0xFFFF9800))
+                                }
+                            }
+                        }
+                    }
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            if (chartData.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("No data yet", color = Color.Gray)
+                }
+            } else {
+                SimpleLineChart(
+                    chartData = chartData,
+                    showConsumed = showConsumed,
+                    showTarget = showTarget,
+                    showDifference = showDifference,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SimpleLineChart(
+    chartData: List<ChartDataPoint>,
+    showConsumed: Boolean,
+    showTarget: Boolean,
+    showDifference: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier = modifier.padding(8.dp)) {
+        if (chartData.isEmpty()) return@Canvas
+        
+        val width = size.width
+        val height = size.height
+        val spacing = width / (chartData.size - 1).coerceAtLeast(1)
+        
+        // Find min/max for scaling
+        val allValues = mutableListOf<Int>()
+        if (showConsumed) allValues.addAll(chartData.map { it.consumed })
+        if (showTarget) allValues.addAll(chartData.map { it.target })
+        if (showDifference) allValues.addAll(chartData.map { it.difference })
+        
+        if (allValues.isEmpty()) return@Canvas
+        
+        val minValue = allValues.minOrNull() ?: 0
+        val maxValue = allValues.maxOrNull() ?: 2000
+        val range = (maxValue - minValue).coerceAtLeast(1)
+        
+        fun scaleY(value: Int): Float {
+            return height - ((value - minValue).toFloat() / range * height)
+        }
+        
+        // Draw consumed line
+        if (showConsumed && chartData.size > 1) {
+            for (i in 0 until chartData.size - 1) {
+                val x1 = i * spacing
+                val y1 = scaleY(chartData[i].consumed)
+                val x2 = (i + 1) * spacing
+                val y2 = scaleY(chartData[i + 1].consumed)
+                drawLine(
+                    color = Color(0xFF4CAF50),
+                    start = androidx.compose.ui.geometry.Offset(x1, y1),
+                    end = androidx.compose.ui.geometry.Offset(x2, y2),
+                    strokeWidth = 4f
+                )
+            }
+        }
+        
+        // Draw target line
+        if (showTarget && chartData.size > 1) {
+            for (i in 0 until chartData.size - 1) {
+                val x1 = i * spacing
+                val y1 = scaleY(chartData[i].target)
+                val x2 = (i + 1) * spacing
+                val y2 = scaleY(chartData[i + 1].target)
+                drawLine(
+                    color = Color(0xFF2196F3),
+                    start = androidx.compose.ui.geometry.Offset(x1, y1),
+                    end = androidx.compose.ui.geometry.Offset(x2, y2),
+                    strokeWidth = 4f
+                )
+            }
+        }
+        
+        // Draw difference line
+        if (showDifference && chartData.size > 1) {
+            for (i in 0 until chartData.size - 1) {
+                val x1 = i * spacing
+                val y1 = scaleY(chartData[i].difference)
+                val x2 = (i + 1) * spacing
+                val y2 = scaleY(chartData[i + 1].difference)
+                drawLine(
+                    color = Color(0xFFFF9800),
+                    start = androidx.compose.ui.geometry.Offset(x1, y1),
+                    end = androidx.compose.ui.geometry.Offset(x2, y2),
+                    strokeWidth = 4f
+                )
+            }
+        }
+        
+        // Draw points
+        chartData.forEachIndexed { index, point ->
+            val x = index * spacing
+            if (showConsumed) {
+                drawCircle(
+                    color = Color(0xFF4CAF50),
+                    radius = 6f,
+                    center = androidx.compose.ui.geometry.Offset(x, scaleY(point.consumed))
+                )
+            }
+            if (showTarget) {
+                drawCircle(
+                    color = Color(0xFF2196F3),
+                    radius = 6f,
+                    center = androidx.compose.ui.geometry.Offset(x, scaleY(point.target))
+                )
+            }
+            if (showDifference) {
+                drawCircle(
+                    color = Color(0xFFFF9800),
+                    radius = 6f,
+                    center = androidx.compose.ui.geometry.Offset(x, scaleY(point.difference))
+                )
+            }
+        }
     }
 }
 

@@ -50,4 +50,25 @@ class DashboardViewModel @Inject constructor(
             entries.sumOf { it.fat.toDouble() }.toFloat()
         )
     }.stateIn(viewModelScope, SharingStarted.Lazily, Triple(0f, 0f, 0f))
+
+    val dailyStats = calorieRepository.getDailyStats()
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    val chartData = combine(dailyStats, targetCalories) { stats, target ->
+        stats.map { stat ->
+            ChartDataPoint(
+                date = stat.date,
+                consumed = stat.totalCalories,
+                target = target,
+                difference = stat.totalCalories - target
+            )
+        }
+    }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 }
+
+data class ChartDataPoint(
+    val date: java.time.LocalDate,
+    val consumed: Int,
+    val target: Int,
+    val difference: Int
+)
