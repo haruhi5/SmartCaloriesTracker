@@ -3,7 +3,6 @@ package com.gemini.calories
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -19,13 +18,13 @@ import com.gemini.calories.ui.AppNavigation
 import com.gemini.calories.ui.Screen
 
 sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: String) {
-    object Home : BottomNavItem(Screen.Dashboard.route, Icons.Default.Home, "Home")
+    object Home : BottomNavItem(Screen.Dashboard.route, Icons.Default.BarChart, "Home")
     object Profile : BottomNavItem(Screen.Profile.route, Icons.Default.Person, "Profile")
     object Settings : BottomNavItem(Screen.Settings.route, Icons.Default.Settings, "Settings")
 }
 
 @Composable
-fun SmartCaloriesApp() {
+fun SmartCaloriesAppContent() {
     val navController = rememberNavController()
     val items = listOf(BottomNavItem.Home, BottomNavItem.Profile, BottomNavItem.Settings)
 

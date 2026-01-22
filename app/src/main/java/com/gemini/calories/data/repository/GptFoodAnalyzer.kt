@@ -18,24 +18,7 @@ class GptFoodAnalyzer @Inject constructor(
 ) : FoodAnalyzer {
 
     override suspend fun analyze(imageData: ByteArray): Result<FoodAnalysisResult> {
-        return try {
-            val apiKey = "Bearer " + kotlinx.coroutines.flow.firstOrNull { 
-                // We need to collect the flow here, but since this is suspend, 
-                // we should ideally pass dependencies or collect in repository.
-                // For simplicity, assuming caller handles key or we fetch it from repo.
-                // However, accessing flow in suspend function requires collection.
-                // Let's assume we get it from settings.
-                 true // Placeholder, we will tackle this in Factory
-            }
-            
-            // To make this cleaner, GptFoodAnalyzer should probably take the key as argument
-            // or we use a runBlocking or first() on the flow if inside suspend.
-            // Let's refactor: Factory passes the key.
-            
-            throw NotImplementedError("This class is intended to be used via Factory/Repository")
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+        return Result.failure(Exception("Use analyzeWithKey() instead - this method requires API key to be passed via repository"))
     }
     
     suspend fun analyzeWithKey(imageData: ByteArray, apiKey: String): Result<FoodAnalysisResult> {
