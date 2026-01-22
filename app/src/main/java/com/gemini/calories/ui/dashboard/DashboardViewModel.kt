@@ -1,5 +1,6 @@
 package com.gemini.calories.ui.dashboard
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gemini.calories.data.local.DailyStats
@@ -14,6 +15,14 @@ import javax.inject.Inject
 class DashboardViewModel @Inject constructor(
     private val calorieRepository: CalorieRepository
 ) : ViewModel() {
+
+    companion object {
+        private const val TAG = "DashboardViewModel"
+    }
+
+    init {
+        Log.d(TAG, "init")
+    }
 
     val todayEntries = calorieRepository.getTodayEntries()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())

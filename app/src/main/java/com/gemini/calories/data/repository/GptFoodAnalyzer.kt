@@ -1,6 +1,7 @@
 package com.gemini.calories.data.repository
 
 import android.util.Base64
+import android.util.Log
 import com.gemini.calories.data.remote.OpenAiApi
 import com.gemini.calories.data.remote.dto.Content
 import com.gemini.calories.data.remote.dto.ImageUrl
@@ -17,13 +18,20 @@ class GptFoodAnalyzer @Inject constructor(
     private val settingsRepository: SettingsRepository
 ) : FoodAnalyzer {
 
+    companion object {
+        private const val TAG = "GptFoodAnalyzer"
+    }
+
     override suspend fun analyze(imageData: ByteArray): Result<FoodAnalysisResult> {
+        Log.e(TAG, "analyze() called without key")
         return Result.failure(Exception("Use analyzeWithKey() instead - this method requires API key to be passed via repository"))
     }
     
     suspend fun analyzeWithKey(imageData: ByteArray, apiKey: String): Result<FoodAnalysisResult> {
+         Log.d(TAG, "analyzeWithKey start, image size=${imageData.size}")
          return try {
             val base64Image = Base64.encodeToString(imageData, Base64.NO_WRAP)
+            Log.d(TAG, "Base64 length=${base64Image.length}")
             val prompt = """
                 You are a nutrition expert. Analyze this image and identify all food items.
                 Return a JSON object with:
@@ -47,19 +55,22 @@ class GptFoodAnalyzer @Inject constructor(
                 )
             )
 
+            Log.d(TAG, "Calling OpenAI API")
             val response = api.chatCompletion("Bearer $apiKey", request)
+            Log.d(TAG, "Response received, choices=${response.choices.size}")
             val jsonContent = response.choices.firstOrNull()?.message?.content 
-                ?: return Result.failure(Exception("Empty response"))
-            
-            // Clean up code blocks if present
+                ?: run {
+                    Log.e(TAG, "Empty response")
+                    return Result.failure(Exception("Empty response"))
+                }
+            Log.d(TAG, "Content length=${jsonContent.length}")
             val cleanJson = jsonContent.replace("```json", "").replace("```", "").trim()
-            
-            // We need to define a Serializable class for parsing the response JSON
-            // For now, let's assuming manual parsing or create a DTO for the result.
-            // Let's use a helper method to parse.
+            Log.d(TAG, "Clean JSON length=${cleanJson.length}")
             val result = parseJson(cleanJson)
+            Log.d(TAG, "Parsed JSON successfully")
             Result.success(result)
         } catch (e: Exception) {
+            Log.e(TAG, "analyzeWithKey error", e)
             Result.failure(e)
         }
     }

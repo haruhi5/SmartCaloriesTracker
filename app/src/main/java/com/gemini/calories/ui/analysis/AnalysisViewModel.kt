@@ -1,6 +1,7 @@
 package com.gemini.calories.ui.analysis
 
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gemini.calories.data.local.MealType
@@ -26,6 +27,14 @@ class AnalysisViewModel @Inject constructor(
     private val calorieRepository: CalorieRepository
 ) : ViewModel() {
 
+    companion object {
+        private const val TAG = "AnalysisViewModel"
+    }
+
+    init {
+        Log.d(TAG, "init")
+    }
+
     private val _uiState = MutableStateFlow<AnalysisUiState>(AnalysisUiState.Idle)
     val uiState = _uiState.asStateFlow()
 
@@ -33,18 +42,23 @@ class AnalysisViewModel @Inject constructor(
     val selectedImageUri = _selectedImageUri.asStateFlow()
 
     fun onImageSelected(uri: Uri) {
+        Log.d(TAG, "onImageSelected: $uri")
         _selectedImageUri.value = uri
         _uiState.value = AnalysisUiState.Idle
     }
 
     fun analyzeImage(imageData: ByteArray) {
+        Log.d(TAG, "analyzeImage size=${imageData.size}")
         viewModelScope.launch {
             _uiState.value = AnalysisUiState.Loading
+            Log.d(TAG, "state=Loading")
             analyzerRepository.analyze(imageData)
                 .onSuccess { result ->
+                    Log.d(TAG, "analysis success foods=${result.foods.size}")
                     _uiState.value = AnalysisUiState.Success(result)
                 }
                 .onFailure { error ->
+                    Log.e(TAG, "analysis failure", error)
                     _uiState.value = AnalysisUiState.Error(error.message ?: "Unknown error")
                 }
         }
