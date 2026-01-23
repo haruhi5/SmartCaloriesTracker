@@ -20,6 +20,9 @@ class SettingsViewModel @Inject constructor(
     val apiType = settingsRepository.apiType
         .stateIn(viewModelScope, SharingStarted.Lazily, "gpt")
 
+    val geminiApiKey = settingsRepository.geminiApiKey
+        .stateIn(viewModelScope, SharingStarted.Lazily, "")
+
     fun saveApiKey(key: String) {
         viewModelScope.launch {
             settingsRepository.setApiKey(key)
@@ -29,6 +32,12 @@ class SettingsViewModel @Inject constructor(
     fun setApiType(type: String) {
         viewModelScope.launch {
             settingsRepository.setApiType(type)
+        }
+    }
+
+    fun saveGeminiApiKey(key: String) {
+        viewModelScope.launch {
+            settingsRepository.setGeminiApiKey(key)
         }
     }
 }

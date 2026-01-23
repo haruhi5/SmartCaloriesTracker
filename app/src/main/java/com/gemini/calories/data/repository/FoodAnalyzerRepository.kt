@@ -27,23 +27,30 @@ class FoodAnalyzerRepository @Inject constructor(
                     "gpt" -> {
                         val key = settingsRepository.apiKey.first()
                         if (key.isBlank()) {
-                            Log.e(TAG, "API Key missing")
-                            return Result.failure(Exception("API Key not found"))
+                            Log.e(TAG, "OpenAI API Key missing")
+                            return Result.failure(Exception("OpenAI API Key not found"))
                         }
                         Log.d(TAG, "using GPT analyzer")
                         gptAnalyzer.analyzeWithKey(imageData, key)
                     }
-                    "gemini_ondevice" -> {
-                        if (!geminiAnalyzer.isOnDeviceSupported()) {
-                            Log.w(TAG, "On-device Gemini not available; aborting ondevice path")
-                            return Result.failure(Exception("On-device Gemini not available on this device"))
+                    "gemini" -> {
+                        val geminiKey = settingsRepository.geminiApiKey.first()
+                        if (geminiKey.isBlank()) {
+                            Log.e(TAG, "Gemini API Key missing")
+                            return Result.failure(Exception("Gemini API Key not found"))
                         }
-                        Log.d(TAG, "using on-device Gemini analyzer")
-                        geminiAnalyzer.analyze(imageData)
+                        Log.d(TAG, "using Gemini analyzer")
+                        geminiAnalyzer.analyzeWithKey(imageData, geminiKey)
                     }
                     else -> {
-                        Log.d(TAG, "using cloud Gemini analyzer")
-                        geminiAnalyzer.analyze(imageData)
+                        // Default to GPT if type is unknown
+                        val key = settingsRepository.apiKey.first()
+                        if (key.isBlank()) {
+                            Log.e(TAG, "OpenAI API Key missing (default path)")
+                            return Result.failure(Exception("OpenAI API Key not found"))
+                        }
+                        Log.d(TAG, "using GPT analyzer (default)")
+                        gptAnalyzer.analyzeWithKey(imageData, key)
                     }
                 }
             result.onSuccess { Log.d(TAG, "analysis success") }

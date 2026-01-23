@@ -230,7 +230,10 @@ fun ResultView(result: FoodAnalysisResult, onSave: (MealType) -> Unit) {
             containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Text(
                 text = "Analysis Result",
                 style = MaterialTheme.typography.titleLarge,

@@ -1,41 +1,19 @@
 package com.gemini.calories.data.repository
 
-import android.content.Context
 import android.graphics.BitmapFactory
-import android.os.Build
 import com.gemini.calories.domain.model.FoodAnalysisResult
-import com.gemini.calories.domain.repository.FoodAnalyzer
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
-class LocalGeminiAnalyzer @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val onDeviceGeminiChecker: OnDeviceGeminiChecker
-) : FoodAnalyzer {
+class LocalGeminiAnalyzer @Inject constructor() {
 
-    private val generativeModel by lazy {
-        GenerativeModel(
-            modelName = "gemini-1.5-flash",  // Cloud fallback model
-            apiKey = ""  // Empty for now; add your Gemini API key if using cloud fallback
-        )
-    }
-
-    fun isOnDeviceSupported(): Boolean = onDeviceGeminiChecker.isAvailable()
-
-    override suspend fun analyze(imageData: ByteArray): Result<FoodAnalysisResult> {
+    suspend fun analyzeWithKey(imageData: ByteArray, apiKey: String): Result<FoodAnalysisResult> {
         return withContext(Dispatchers.IO) {
             try {
-                // If this is truly local (AICore), the code is different. 
-                // Assuming standard Gemini Pro Vision behavior for now as a fallback/placeholder 
-                // since Nano integration is device specific.
-                
-                // Let's treat this as "Gemini Analyzer" (could be remote if Nano not available).
-                
                 val bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData.size)
                 
                 val prompt = """
@@ -43,7 +21,12 @@ class LocalGeminiAnalyzer @Inject constructor(
                     Return JSON: { "foods": [...], "totalCalories": int, "confidence": float }
                 """.trimIndent()
                 
-                val response = generativeModel.generateContent(
+                val model = GenerativeModel(
+                    modelName = "gemini-1.5-flash",
+                    apiKey = apiKey
+                )
+
+                val response = model.generateContent(
                     content {
                         image(bitmap)
                         text(prompt)
@@ -67,4 +50,8 @@ class LocalGeminiAnalyzer @Inject constructor(
             }
         }
     }
+
+    // Kept only to satisfy any interface expectations; prefer analyzeWithKey.
+    suspend fun analyze(imageData: ByteArray): Result<FoodAnalysisResult> =
+        Result.failure(Exception("Use analyzeWithKey() and provide a Gemini API key."))
 }

@@ -112,22 +112,22 @@ fun CalorieProgressCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
-            modifier = Modifier.padding(24.dp),
+            modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             CalorieRing(
                 consumed = consumed,
                 target = target,
-                size = 200.dp
+                size = 180.dp
             )
             Spacer(modifier = Modifier.height(24.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                MacroItem("Protein", "${protein.toInt()}g", Color(0xFF2196F3))
-                MacroItem("Carbs", "${carbs.toInt()}g", Color(0xFFFF9800))
-                MacroItem("Fat", "${fat.toInt()}g", Color(0xFFE91E63))
+                MacroItem("Protein", "${protein.toInt()}g", Color(0xFF2196F3), Modifier.weight(1f))
+                MacroItem("Carbs", "${carbs.toInt()}g", Color(0xFFFF9800), Modifier.weight(1f))
+                MacroItem("Fat", "${fat.toInt()}g", Color(0xFFE91E63), Modifier.weight(1f))
             }
         }
     }
@@ -174,23 +174,35 @@ fun CalorieRing(
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = "$consumed",
-                style = MaterialTheme.typography.displayMedium,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
             )
             Text(
                 text = "/ $target kcal",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1
             )
         }
     }
 }
 
 @Composable
-fun MacroItem(label: String, value: String, color: Color) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = color)
-        Text(text = label, style = MaterialTheme.typography.bodySmall)
+fun MacroItem(label: String, value: String, color: Color, modifier: Modifier = Modifier) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = color,
+            maxLines = 1
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            maxLines = 1
+        )
     }
 }
 
@@ -305,6 +317,22 @@ fun CalorieChartCard(
                         .fillMaxWidth()
                         .height(200.dp)
                 )
+
+                if (showDifference) {
+                    val latest = chartData.last()
+                    val diff = latest.difference
+                    val diffText = when {
+                        diff > 0 -> "${diff} kcal over target"
+                        diff < 0 -> "${-diff} kcal under target"
+                        else -> "On target"
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Latest diff: $diffText",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }

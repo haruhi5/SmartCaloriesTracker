@@ -3,10 +3,14 @@ package com.gemini.calories.ui.settings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -18,8 +22,14 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val apiKey by viewModel.apiKey.collectAsState()
+    val geminiKey by viewModel.geminiApiKey.collectAsState()
     val apiType by viewModel.apiType.collectAsState()
     var tempKey by remember(apiKey) { mutableStateOf(apiKey) }
+    var tempGeminiKey by remember(geminiKey) { mutableStateOf(geminiKey) }
+    var openAiKeyVisible by remember { mutableStateOf(false) }
+    var geminiKeyVisible by remember { mutableStateOf(false) }
+    var openAiSaved by remember { mutableStateOf(false) }
+    var geminiSaved by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -53,42 +63,90 @@ fun SettingsScreen(
                     subtitle = "Uses cloud Gemini configuration bundled with the app.",
                     onClick = { viewModel.setApiType("gemini") }
                 )
-                AiEngineOptionCard(
-                    selected = apiType == "gemini_ondevice",
-                    title = "Gemini (On-device)",
-                    subtitle = "Runs locally when supported, no API key required.",
-                    onClick = { viewModel.setApiType("gemini_ondevice") }
-                )
-
                 if (apiType == "gpt") {
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                     OutlinedTextField(
                         value = tempKey,
-                        onValueChange = { tempKey = it },
+                        onValueChange = {
+                            tempKey = it
+                            openAiSaved = false
+                        },
                         label = { Text("OpenAI API Key") },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
+                        visualTransformation = if (openAiKeyVisible) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { openAiKeyVisible = !openAiKeyVisible }) {
+                                Icon(
+                                    imageVector = if (openAiKeyVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                    contentDescription = if (openAiKeyVisible) "Hide API key" else "Show API key"
+                                )
+                            }
+                        }
                     )
                     Button(
-                        onClick = { viewModel.saveApiKey(tempKey) },
+                        onClick = {
+                            viewModel.saveApiKey(tempKey)
+                            openAiSaved = true
+                        },
                         modifier = Modifier.align(androidx.compose.ui.Alignment.End)
                     ) {
                         Text("Save Key")
                     }
-                } else if (apiType == "gemini_ondevice") {
+                    if (openAiSaved) {
+                        Text(
+                            text = "OpenAI key saved",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.align(androidx.compose.ui.Alignment.End)
+                        )
+                    }
+                } else if (apiType == "gemini") {
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                    Text(
-                        text = "On-device Gemini runs locally when supported (Pixel/Android 14+). No API key required.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    OutlinedTextField(
+                        value = tempGeminiKey,
+                        onValueChange = {
+                            tempGeminiKey = it
+                            geminiSaved = false
+                        },
+                        label = { Text("Gemini API Key") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        visualTransformation = if (geminiKeyVisible) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { geminiKeyVisible = !geminiKeyVisible }) {
+                                Icon(
+                                    imageVector = if (geminiKeyVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                    contentDescription = if (geminiKeyVisible) "Hide API key" else "Show API key"
+                                )
+                            }
+                        }
                     )
-                } else {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                    Text(
-                        text = "Cloud Gemini uses your bundled API configuration. No key required here.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Button(
+                        onClick = {
+                            viewModel.saveGeminiApiKey(tempGeminiKey)
+                            geminiSaved = true
+                        },
+                        modifier = Modifier.align(androidx.compose.ui.Alignment.End)
+                    ) {
+                        Text("Save Key")
+                    }
+                    if (geminiSaved) {
+                        Text(
+                            text = "Gemini key saved",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.align(androidx.compose.ui.Alignment.End)
+                        )
+                    }
                 }
             }
         }
