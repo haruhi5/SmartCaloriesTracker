@@ -33,38 +33,43 @@ val NutrientColors = object {
 
 ## 2. 页面结构 (Navigation)
 
-### 2.1 底部导航
+### 2.1 左侧抽屉导航 (Left Drawer)
+
+整体导航采用 **左侧抽屉 (ModalNavigationDrawer)**，适配手机竖屏使用场景：
 
 ```
-┌─────────────────────────────────────┐
-│                                     │
-│           [内容区域]                  │
-│                                     │
-├─────────┬─────────┬─────────┬───────┤
-│  首页   │  记录   │  统计   │  我的  │
-│  Home   │ Records │ Stats  │ Profile│
-└─────────┴─────────┴─────────┴───────┘
+┌───────────────┬───────────────────────────────┐
+│  ☰  Smart Calories│                           │
+│─────────────────│          [内容区域]           │
+│  ▸ Dashboard   │                           │
+│  ▸ Analyze     │                           │
+│  ▸ Profile     │                           │
+│  ▸ Settings    │                           │
+└───────────────┴───────────────────────────────┘
 ```
+
+- 使用 `ModalNavigationDrawer` + `ModalDrawerSheet` + `NavigationDrawerItem` 实现。
+- 当前选中项高亮，保持与路由状态同步。
+- 导航入口：顶部应用栏左侧展示「汉堡按钮」，点击或边缘滑动打开抽屉。
 
 ### 2.2 页面清单
 
-| 页面       | 路由                  | 描述                      |
-|:---------|:--------------------|:------------------------|
-| 首页       | `/home`             | 今日摄入概览、快速添加入口           |
-| 记录列表     | `/records`          | 历史食物记录列表                |
-| 统计图表     | `/stats`            | 周/月卡路里趋势图表              |
-| 个人中心     | `/profile`          | 用户资料、目标设置、数据导出          |
-| 拍照分析     | `/analyze`          | 相机拍照或相册选择，AI 分析         |
-| 分析结果     | `/analyze/result`   | 显示识别结果，确认保存             |
-| 设置       | `/settings`         | API 配置、通知设置、主题切换        |
+| 页面         | 路由            | 描述                                      |
+|:------------|:----------------|:------------------------------------------|
+| Dashboard   | `dashboard`     | 今日摄入概览、卡路里环、日/周趋势与今日记录列表         |
+| Analyze     | `analysis`      | 相机拍照或相册选择，AI 分析并展示可编辑的识别结果       |
+| Profile     | `profile`       | 用户资料、TDEE 目标设置、导出饮食记录               |
+| Settings    | `settings`      | AI 引擎选择、API Key、主题模式等应用设置            |
 
 ## 3. 首页设计 (Dashboard)
 
 ### 3.1 布局结构
 
+顶部使用 **小型应用栏 (SmallTopAppBar)**，与内容区域共用同一背景颜色，避免「悬浮卡片」视觉，并保持紧贴状态栏：
+
 ```
 ┌─────────────────────────────────────┐
-│  Smart Calories Tracker       ⚙️   │ ← TopAppBar
+│  ☰  Smart Calories Tracker         │ ← SmallTopAppBar
 ├─────────────────────────────────────┤
 │  ┌─────────────────────────────┐    │
 │  │     今日摄入                 │    │ ← 主卡片
@@ -323,70 +328,116 @@ fun FoodEntryCard(
 
 ## 7. 设置页面
 
-使用 `me.zhanghai.compose.preference` 构建原生风格设置列表：
+### 7.1 AI 分析引擎选择
+
+设置页顶部展示一个「AI 分析引擎」卡片，用于在不同分析后端之间切换：
+
+```
+┌─────────────────────────────────────┐
+│ AI Analysis Engine                 │
+│ ─────────────────────────────────  │
+│ [● GPT-4 Vision]                  │
+│     最高质量的图像理解，需要 OpenAI API Key│
+│ [○ Gemini (Cloud)]                │
+│     使用云端 Gemini，密钥在应用内统一配置  │
+│ [○ Gemini (On-device)]            │
+│     在支持设备上本地运行，更注重隐私       │
+│                                     │
+│  (当选择 GPT-4 Vision 时显示)        │
+│  OpenAI API Key:  [••••••••••] [Save] │
+└─────────────────────────────────────┘
+```
+
+交互规则：
+
+- 仅允许三者 **单选**，当前选中的引擎以高亮卡片或选中态标识。
+- 下方动态说明当前引擎的优劣与适用场景（质量 / 隐私 / 依赖网络等）。
+- 只有在选择 **GPT-4 Vision** 时出现 `OpenAI API Key` 输入框与保存按钮。
+- Gemini Cloud / On-device 不需要在此页面输入密钥，只展示说明文案。
+
+Compose 实现示例：
 
 ```kotlin
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel) {
-    ProvidePreferenceLocals {
-        LazyColumn {
-            preferenceCategory(
-                key = "ai_settings",
-                title = { Text("AI 设置") }
+fun AiEngineSettings(
+    apiType: String,
+    onApiTypeChange: (String) -> Unit,
+    apiKey: String,
+    onApiKeyChange: (String) -> Unit,
+    onSaveKey: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = "AI Analysis Engine",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+
+        AiEngineOptionCard(
+            selected = apiType == "gpt",
+            title = "GPT-4 Vision",
+            subtitle = "Best quality vision model, requires OpenAI API key.",
+            onClick = { onApiTypeChange("gpt") }
+        )
+        AiEngineOptionCard(
+            selected = apiType == "gemini",
+            title = "Gemini (Cloud)",
+            subtitle = "Uses cloud Gemini configuration bundled with the app.",
+            onClick = { onApiTypeChange("gemini") }
+        )
+        AiEngineOptionCard(
+            selected = apiType == "gemini_ondevice",
+            title = "Gemini (On-device)",
+            subtitle = "Runs locally when supported, no API key required.",
+            onClick = { onApiTypeChange("gemini_ondevice") }
+        )
+
+        if (apiType == "gpt") {
+            OutlinedTextField(
+                value = apiKey,
+                onValueChange = onApiKeyChange,
+                label = { Text("OpenAI API Key") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+            Button(
+                onClick = onSaveKey,
+                modifier = Modifier.align(Alignment.End)
             ) {
-                listPreference(
-                    key = "api_type",
-                    defaultValue = "gpt",
-                    values = listOf("gpt", "gemini"),
-                    title = { Text("分析引擎") },
-                    summary = { Text(if (it == "gpt") "GPT-4 Vision" else "本地 Gemini") }
-                )
-                
-                textFieldPreference(
-                    key = "api_key",
-                    defaultValue = "",
-                    title = { Text("API Key") },
-                    textToValue = { it },
-                    valueToText = { "••••••••" }
-                )
+                Text("Save Key")
             }
-            
-            preferenceCategory(
-                key = "display_settings",
-                title = { Text("显示设置") }
-            ) {
-                listPreference(
-                    key = "theme_mode",
-                    defaultValue = "system",
-                    values = listOf("light", "dark", "system"),
-                    title = { Text("主题模式") },
-                    summary = { Text(when(it) {
-                        "light" -> "浅色" 
-                        "dark" -> "深色" 
-                        else -> "跟随系统"
-                    }) }
-                )
-                
-                listPreference(
-                    key = "unit_system",
-                    defaultValue = "metric",
-                    values = listOf("metric", "imperial"),
-                    title = { Text("单位制") },
-                    summary = { Text(if (it == "metric") "公制 (kg, cm)" else "英制 (lb, in)") }
-                )
-            }
-            
-            preferenceCategory(
-                key = "data_settings",
-                title = { Text("数据管理") }
-            ) {
-                preference(
-                    key = "export_csv",
-                    title = { Text("导出数据") },
-                    summary = { Text("导出所有记录为 CSV 文件") },
-                    onClick = { viewModel.exportData() }
-                )
-            }
+        }
+    }
+}
+```
+
+```kotlin
+@Composable
+fun AiEngineOptionCard(
+    selected: Boolean,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit
+) {
+    ElevatedCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = if (selected)
+                MaterialTheme.colorScheme.primaryContainer
+            else
+                MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(title, style = MaterialTheme.typography.titleSmall)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

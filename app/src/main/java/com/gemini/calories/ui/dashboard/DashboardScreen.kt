@@ -44,32 +44,12 @@ fun DashboardScreen(
     var showTarget by remember { mutableStateOf(true) }
     var showDifference by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Smart Calories Tracker") },
-                actions = {
-                    IconButton(onClick = { navController.navigate(Screen.Settings.route) }) {
-                        Icon(Icons.Default.Settings, "Settings")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background,
-        floatingActionButton = {
-            FloatingActionButton(onClick = { navController.navigate(Screen.Analysis.route) }) {
-                Icon(Icons.Default.Add, "Add Food")
-            }
-        }
-    ) { padding ->
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -106,6 +86,15 @@ fun DashboardScreen(
             items(todayEntries) { entry ->
                 FoodEntryCard(entry)
             }
+        }
+
+        FloatingActionButton(
+            onClick = { navController.navigate(Screen.Analysis.route) },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+        ) {
+            Icon(Icons.Default.Add, "Add Food")
         }
     }
 }

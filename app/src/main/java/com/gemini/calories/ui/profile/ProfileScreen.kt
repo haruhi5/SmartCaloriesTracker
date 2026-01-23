@@ -45,172 +45,151 @@ fun ProfileScreen(
         exportUri?.let { viewModel.shareExportedFile(it) }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Profile") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { viewModel.exportData() }) {
-                        Icon(Icons.Default.Share, "Export CSV")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
-        Column(
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
+        Card(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
+                .fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                Text(
+                    text = "Personal Information",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Text(
-                        text = "Personal Information",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    
                     OutlinedTextField(
-                        value = name,
-                        onValueChange = { name = it },
-                        label = { Text("Name") },
-                        modifier = Modifier.fillMaxWidth()
+                        value = height,
+                        onValueChange = { height = it },
+                        label = { Text("Height (cm)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f)
                     )
-
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                OutlinedTextField(
-                    value = height,
-                    onValueChange = { height = it },
-                    label = { Text("Height (cm)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f)
-                )
-                OutlinedTextField(
-                    value = weight,
-                    onValueChange = { weight = it },
-                    label = { Text("Weight (kg)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            
-            OutlinedTextField(
-                value = age,
-                onValueChange = { age = it },
-                label = { Text("Age") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            // Gender Selection
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Gender",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Gender.entries.forEach { g ->
-                    FilterChip(
-                        selected = gender == g,
-                        onClick = { gender = g },
-                        label = { Text(g.name.lowercase().capitalize(Locale.ROOT)) }
+                    OutlinedTextField(
+                        value = weight,
+                        onValueChange = { weight = it },
+                        label = { Text("Weight (kg)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f)
                     )
                 }
-            }
 
-            // Activity Level
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Activity Level",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                OutlinedTextField(
+                    value = age,
+                    onValueChange = { age = it },
+                    label = { Text("Age") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
                 )
-            ) {
-                Column(modifier = Modifier.padding(8.dp)) {
-                ActivityLevel.entries.forEach { level ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        RadioButton(
-                            selected = activityLevel == level,
-                            onClick = { activityLevel = level }
-                        )
-                        Text(
-                            text = level.name.replace("_", " ").lowercase().capitalize(Locale.ROOT),
-                            style = MaterialTheme.typography.bodyMedium
+
+                // Gender Selection
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Gender",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Gender.entries.forEach { g ->
+                        FilterChip(
+                            selected = gender == g,
+                            onClick = { gender = g },
+                            label = { Text(g.name.lowercase().capitalize(Locale.ROOT)) }
                         )
                     }
+                }
+
+                // Activity Level
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Activity Level",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        ActivityLevel.entries.forEach { level ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(
+                                    selected = activityLevel == level,
+                                    onClick = { activityLevel = level }
+                                )
+                                Text(
+                                    text = level.name.replace("_", " ").lowercase().capitalize(Locale.ROOT),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
                     }
                 }
-            }
 
-            // Goal
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Fitness Goal",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                FitnessGoal.entries.forEach { g ->
-                    FilterChip(
-                        selected = goal == g,
-                        onClick = { goal = g },
-                        label = { Text(g.name.replace("_", " ").lowercase().capitalize(Locale.ROOT)) }
-                    )
+                // Goal
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Fitness Goal",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    FitnessGoal.entries.forEach { g ->
+                        FilterChip(
+                            selected = goal == g,
+                            onClick = { goal = g },
+                            label = { Text(g.name.replace("_", " ").lowercase().capitalize(Locale.ROOT)) }
+                        )
+                    }
                 }
-            }
 
-            Button(
-                onClick = {
-                    viewModel.saveProfile(
-                        name,
-                        height.toFloatOrNull() ?: 0f,
-                        weight.toFloatOrNull() ?: 0f,
-                        age.toIntOrNull() ?: 0,
-                        gender,
-                        activityLevel,
-                        goal
-                    )
-                    navController.navigateUp()
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp)
-            ) {
-                Text("Save Profile")
-            }
+                Button(
+                    onClick = {
+                        viewModel.saveProfile(
+                            name,
+                            height.toFloatOrNull() ?: 0f,
+                            weight.toFloatOrNull() ?: 0f,
+                            age.toIntOrNull() ?: 0,
+                            gender,
+                            activityLevel,
+                            goal
+                        )
+                        navController.navigateUp()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp)
+                ) {
+                    Text("Save Profile")
                 }
             }
         }
